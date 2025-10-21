@@ -25,10 +25,16 @@ The title text (`<h1>`) is automatically pulled from the main `index.html`'s `<t
 ### 2. Splash Screen Handling
 This component starts with a simple "Click to Begin" splash screen. This is crucial as it provides the necessary **user interaction** required by modern browsers to allow future components to play audio or video media.
 
-### 3. Options Menu Extensibility
-The **Options Screen** is pre-built with a dedicated empty container (`<div id="modular-settings-panel">`). This is the designated **injection point** for future Options Modules (e.g., volume sliders, graphics toggles) to place their UI elements.
+### 3. Options Menu Extensibility (Event Bus Publisher)
+The **Options Screen** is pre-built with a dedicated empty container (`<div id="modular-settings-panel">`). Instead of directly calling other systems, the system publishes the **`ui:options_panel_ready`** event. This makes the container the designated **injection point** for future Options Modules (e.g., volume sliders, graphics toggles) to inject their UI autonomously.
 
-### 4. Visual Feedback
+### 4. Event-Driven Communication
+This component is the **publisher** for state changes in the options menu:
+* Upon opening the Options screen, it publishes **`ui:options_panel_ready`**.
+* Clicking **Save** publishes **`ui:options_save`**.
+* Clicking **Cancel** publishes **`ui:options_cancel`**.
+
+### 5. Visual Feedback
 After pressing the **Save** button in the Options Menu, the system displays a brief **"Settings Saved!"** flash message before seamlessly fading back into the main Title Screen.
 
 ---
@@ -44,5 +50,5 @@ To activate this component in the main **`DuskyByte/LocalWebAppLauncher`** appli
 ```javascript
 const SYSTEM_MODULES = [
     "title-screen-system", // MUST BE FIRST
-    "demo-module"
+    "audio-system"
 ];
