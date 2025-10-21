@@ -1,89 +1,75 @@
-(function() {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.type = 'text/css';
-    link.href = './styles/title-screen-system.css'; 
-    document.head.appendChild(link);
-    
-    function showSplashScreen() {
-        document.body.innerHTML = '';
-        const splashScreen = document.createElement('div');
-        splashScreen.id = 'splash-screen';
-        splashScreen.innerHTML = `
-            <main id="splash-container">
-                <h2 id="splash-prompt">Click Anywhere to Begin</h2>
-            </main>
-        `;
-        document.body.appendChild(splashScreen);
-        
-        splashScreen.addEventListener('click', () => {
-            showTitleScreen();
-        }, { once: true });
-    }
-    
-    function showTitleScreen() {
-        document.body.innerHTML = '';
-        const titleScreen = document.createElement('div');
-        titleScreen.id = 'title-screen';
-        
-        const appTitle = document.title || "My Local Web App";
-        titleScreen.innerHTML = `
-            <main id="app-container">
-                <header>
-                    <h1>${appTitle}</h1>
-                    <p>Now using a Title Screen System</p>
-                </header>
-                <div id="screen-view">
-                    <div id="main-menu">
-                        <button id="start-button">Start Application</button>
-                        <button id="options-button">Options</button>
-                        <button id="exit-button">Exit</button>
-                    </div>
-                </div>
-            </main>
-        `;
-        document.body.appendChild(titleScreen);
-        
-        document.getElementById('start-button')?.addEventListener('click', () => {
-            alert('Starting the application! (Future module will clear this screen)');
-        });
-        document.getElementById('options-button')?.addEventListener('click', showOptionsScreen);
-        document.getElementById('exit-button')?.addEventListener('click', () => {
-            window.close();
-        });
-        
-        setTimeout(() => {
-            titleScreen.classList.add('fade-in');
-        }, 100);
-    }
-    
-    function showOptionsScreen() {
-        const screenView = document.getElementById('screen-view');
-        if (!screenView) return;
-        
-        screenView.innerHTML = `
-            <div id="options-menu">
-                <h2>System Options</h2>
-                
-                <div id="modular-settings-panel">
-                    <p>Future settings from other modules will appear here!</p>
-                </div>
-                
-                <div id="options-controls">
-                    <button id="save-button">Save</button>
-                    <button id="cancel-button">Cancel</button>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('save-button').addEventListener('click', () => {
-            alert('Settings Saved! (Future implementation)');
-            showTitleScreen();
-        });
-        document.getElementById('cancel-button').addEventListener('click', () => {
-            showTitleScreen();
-        });
-    }
+const EventBus = {
+    listeners: {},
 
-    showSplashScreen();
-})();
+    /**
+     * Registers a callback function to run when an event is published.
+     * @param {string} eventName - The name of the event (e.g., 'options:screen_shown').
+     * @param {function} callback - The function to execute when the event fires.
+     */
+    subscribe: function(eventName, callback) {
+        if (!this.listeners[eventName]) {
+            this.listeners[eventName] = [];
+        }
+        this.listeners[eventName].push(callback);
+    },
+    
+    /**
+     * Removes a specific callback function from an event's listener list.
+     */
+    unsubscribe: function(eventName, callback) {
+        if (this.listeners[eventName]) {
+            this.listeners[eventName] = this.listeners[eventName].filter(
+                listener => listener !== callback
+            );
+        }
+    },
+
+    /**
+     * Executes all functions subscribed to the given event.
+     * @param {string} eventName - The name of the event to fire.
+     * @param {any} data - Optional data to pass to the subscribed functions.
+     */
+    publish: function(eventName, data) {
+        if (this.listeners[eventName]) {
+            console.log(`[EventBus] Publishing: ${eventName}`);
+            this.listeners[eventName].forEach(callback => {
+                try {
+                    callback(data);
+                } catch (e) {
+                    console.error(`[EventBus] Error in ${eventName} listener:`, e);
+                }
+            });
+        }
+    }
+};
+
+/**
+ * The SYSTEM_MODULES array contains the filenames (without the .js extension) of systems located in the 'modules/' folder.
+ * To enable a system, just add its filename string to this array!
+ */
+const SYSTEM_MODULES = [
+    "title-screen-system",
+    "audio-system"
+];
+
+/**
+ * Loads a JavaScript module dynamically by creating and appending a script tag.
+ * @param {string} moduleName - The filename of the module (e.g., "combat-system").
+ */
+function loadModule(moduleName) {
+    console.log(`Loading ${moduleName} module...`);
+    const script = document.createElement('script');
+    script.src = `./modules/${moduleName}.js`;
+    script.onload = () => {
+        console.log(`Module Loaded: ${moduleName}`);
+    };
+    script.onerror = () => {
+        console.error(`Failed to load module: ${moduleName}. Check the filename and path.`);
+    };
+    document.head.appendChild(script);
+}
+
+window.EventBus = EventBus;
+console.log(`TTRPG Web Launcher Initializing...`);
+console.log(`Loading ${SYSTEM_MODULES.length} system modules...`);
+SYSTEM_MODULES.forEach(loadModule);
